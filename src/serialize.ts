@@ -19,6 +19,7 @@ import { LatLng, LatLngBounds, LatLngLiteral } from "./common";
 import { encodePath } from "./util";
 import { createSignature} from "@googlemaps/url-signature";
 import { stringify as qs } from "query-string";
+import { ParamsSerializerOptions } from "axios";
 
 const separator = "|";
 
@@ -105,23 +106,25 @@ export function serializer(
     arrayFormat: "separator",
     arrayFormatSeparator: separator,
   }
-) {
-  return (params: { [key: string]: any }) => {
-    // avoid mutating params
-    const serializedParams = { ...params };
+): ParamsSerializerOptions {
+  return {
+    serialize: (params: { [key: string]: any }) => {
+      // avoid mutating params
+      const serializedParams = { ...params };
 
-    Object.keys(format).forEach((key: string) => {
-      if (key in serializedParams) {
-        serializedParams[key] = format[key](serializedParams[key]);
+      Object.keys(format).forEach((key: string) => {
+        if (key in serializedParams) {
+          serializedParams[key] = format[key](serializedParams[key]);
+        }
+      });
+
+      if ("client_id" in serializedParams && "client_secret" in serializedParams) {
+        // Special case to handle premium plan signature
+        return createPremiumPlanQueryString(serializedParams, queryStringOptions, baseUrl);
       }
-    });
 
-    if ("client_id" in serializedParams && "client_secret" in serializedParams) {
-      // Special case to handle premium plan signature
-      return createPremiumPlanQueryString(serializedParams, queryStringOptions, baseUrl);
-    }
-
-    return qs(serializedParams, queryStringOptions);
+      return qs(serializedParams, queryStringOptions);
+    },
   };
 }
 
