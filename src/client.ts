@@ -93,7 +93,11 @@ export const userAgent = `google-maps-services-node-${version}`;
 export const acceptEncoding = "gzip";
 export const X_GOOG_MAPS_EXPERIENCE_ID = "X-GOOG-MAPS-EXPERIENCE-ID";
 
-const defaultConfig: AxiosRequestConfig = {
+const defaultConfig: Omit<AxiosInstance['defaults'], 'headers'> & {
+  headers: {
+    [key: string]: AxiosInstance['defaults']['headers'][keyof AxiosInstance['defaults']['headers']]
+  },
+} = {
   timeout: defaultTimeout,
   httpsAgent: defaultHttpsAgent,
   adapter: customAdapter,
